@@ -156,8 +156,10 @@ void loop()
   
         double force = 0;
   
-        if (abs(vh) > 0.5) {
-         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.01538;
+        if (vh > 0) {
+         force = 0;
+        } else {
+         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.01538; 
         }
 
 
@@ -189,8 +191,12 @@ void loop()
 //    force = 0;
 //  }
 
-  Serial.println(force);
-
+  //Serial.concat("Velocity: ", String(vh, DEC), "Force: ". String(force, DEC));
+  Serial.print(vh);
+  Serial.print(" ");
+  Serial.print(force);
+  Serial.println();
+  
   // Step 3.2:
   Tp = rp / rs * rh * force;  // Compute the require motor pulley torque (Tp) to generate that force
 
