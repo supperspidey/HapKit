@@ -146,57 +146,34 @@ void loop()
         double A = 0.146;                                // Area of the blade [m^2]
         double rho = 1000;                               // Density of water  [kg/m^3]
         double v = 1;                                   // Velocity of undisturbed flow [m/s]
-        double angle = ts*3.14159/180;                      // Angle converted into radians
+        double angleRadians = ts*3.14159/180;                      // Angle converted into radians
         double Clmax = 1.2;  // Maximum lift coefficient
-        double Cd = 2*Clmax*pow(sin(angle), 2);          // Drag coefficient
-        double Cl = Clmax*sin(2*angle);
-  
+        double Cd = 2*Clmax*pow(sin(angleRadians), 2);          // Drag coefficient
+        double Cl = Clmax*sin(2*angleRadians);
+
         double Fd = 0.5*Cd*rho*A*pow(v, 2);
         double Fl = 0.5*Cl*rho*A*pow(v, 2);
-  
-        double force = 0;
-  
-        if (vh > 0) {
-         force = 0;
+
+        // Air - coefficient and force
+        double rhoAir = 1.225;  // Density of air  [kg/m^3]
+        double CdAir = 0.04;   // Drag coefficient of streamlined body
+        double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
+
+        //double force = 0;  // declared twice
+
+        if (vh > 0.5) {
+         force = FdAir * 0.008; // air
         } else {
-         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.01538; 
+         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.008; // water
         }
 
-
-
-  // Step 3.1:
-  //force = -0.5; // In lab 3, you will generate a force by simply assigning this to a constant number (in Newtons)
-  // Lab 4 Step 1.4: render a VIRTUAL SPRING
-  //       double k_spring = 30; //[N/m]
-  //       force = -k_spring*xh;
-  // Lab 4 Step 2.4: render a VIRTUAL DAMPER
-  //     double b_damper = 0.35;
-  //     force = -b_damper*vh;
-  // Lab 4 Step 3.3: render a VIRTUAL TEXTURE using the damping approach (there is a more clever way to do this)
-  //       double w = .005;  //width of damping area
-  //       double b_damper = 0.5;
-  //       for(int i=0; i<9; i=i+2){
-  //         if((abs(xh)>i*w)&&(abs(xh)<(i+1)*w)){
-  //           force = -b_damper*vh;
-  //         } else if((abs(xh)>(i+1)*w)&&(abs(xh)<(i+2)*w)){
-  //           force = 0;
-  //         }
-  //       }
-  // Lab 4 Step 4.3: render a VIRTUAL WALL
-//  double x_wall = .01;
-//  double k_wall = 400;
-//  if (xh > x_wall) {
-//    force = -k_wall * (xh - x_wall);
-//  } else {
-//    force = 0;
-//  }
-
-  //Serial.concat("Velocity: ", String(vh, DEC), "Force: ". String(force, DEC));
-  Serial.print(vh);
-  Serial.print(" ");
   Serial.print(force);
+  Serial.print(" ");
+  Serial.print(updatedPos);
+  Serial.print(" ");
+  Serial.print(angleRadians);
   Serial.println();
-  
+
   // Step 3.2:
   Tp = rp / rs * rh * force;  // Compute the require motor pulley torque (Tp) to generate that force
 
@@ -280,4 +257,3 @@ void setPwmFrequency(int pin, int divisor) {
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
 }
-
