@@ -168,9 +168,9 @@ void loop()
         }
 
   Serial.print(force);
-  Serial.print(" ");
+  Serial.print(",");
   Serial.print(updatedPos);
-  Serial.print(" ");
+  Serial.print(",");
   Serial.print(angleRadians);
   Serial.println();
 
