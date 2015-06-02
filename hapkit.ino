@@ -40,6 +40,12 @@ double Tp = 0;              // torque of the motor pulley
 double duty = 0;            // duty cylce (between 0 and 255)
 unsigned int output = 0;    // output command to the motor
 
+// Angle and time variables
+double oldAngle = 0;
+double currentAngle = 0;
+unsigned long oldTimeSinceBegin = 0;
+unsigned long currentTimeSinceBegin = 0;
+
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -74,6 +80,7 @@ void setup()
 // --------------------------------------------------------------
 void loop()
 {
+  currentTimeSinceBegin = millis();
 
   //*************************************************************
   //*** Section 1. Compute position in counts (do not change) ***
@@ -123,6 +130,7 @@ void loop()
   //Serial.println(updatedPos);
   // Step 2.6:
   double ts = -.0107 * updatedPos + 4.9513; // Compute the angle of the sector pulley (ts) in degrees based on updatedPos
+
   // Step 2.7:
   xh = rh * (ts * 3.14159 / 180); // Compute the position of the handle based on ts
   // Step 2.8: print xh via serial monitor
@@ -145,12 +153,21 @@ void loop()
   // Rowing code
         double A = 0.146;                                // Area of the blade [m^2]
         double rho = 1000;                               // Density of water  [kg/m^3]
-        double v = 1;                                   // Velocity of undisturbed flow [m/s]
+        double vb = 5;                                    // Velocity of the boat [m/s]
+        double L = 1.8;                                 // Travel length of the rowing seat [m]
         double angleRadians = ts*3.14159/180;                      // Angle converted into radians
+        currentAngle = angleRadians;
         double Clmax = 1.2;  // Maximum lift coefficient
-        double Cd = 2*Clmax*pow(sin(angleRadians), 2);          // Drag coefficient
-        double Cl = Clmax*sin(2*angleRadians);
+        double dphidt = (currentAngle - oldAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
 
+        double up = vb*sin(angleRadians);
+        double ul = dphidt*L - vb*cos(angleRadians);
+        double alpha = atan2(ul, up);
+
+        double Cd = 2*Clmax*pow(sin(alpha), 2);          // Drag coefficient
+        double Cl = Clmax*sin(2*alpha);
+
+        double v = sqrt(pow(up, 2) + pow(ul, 2));
         double Fd = 0.5*Cd*rho*A*pow(v, 2);
         double Fl = 0.5*Cl*rho*A*pow(v, 2);
 
@@ -159,20 +176,22 @@ void loop()
         double CdAir = 0.04;   // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        //double force = 0;  // declared twice
+        double scale = 0.0005;
 
         if (vh > 0.5) {
-         force = FdAir * 0.008; // air
+         force = FdAir * scale; // air
         } else {
-         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.008; // water
+         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * scale; // water
         }
-
+  
+  
   Serial.print(force);
-  Serial.print(" ");
-  Serial.print(updatedPos);
-  Serial.print(" ");
+  Serial.print(",");
+  Serial.print(alpha);
+  Serial.print(",");
   Serial.print(angleRadians);
   Serial.println();
+  
 
   // Step 3.2:
   Tp = rp / rs * rh * force;  // Compute the require motor pulley torque (Tp) to generate that force
@@ -222,6 +241,9 @@ void loop()
   }
   output = (int)(duty * 255);  // convert duty cycle to output signal
   analogWrite(pwmPin, output); // output the signal
+
+  oldAngle = currentAngle;
+  oldTimeSinceBegin = currentTimeSinceBegin;
 }
 
 // --------------------------------------------------------------
