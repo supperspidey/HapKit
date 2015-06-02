@@ -180,28 +180,35 @@ void loop()
         double CdAir = 0.04;    // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        double scale = 0.01;
+        double scale = 0.001;
 
-        if (currentOarAngle < 0) {
+        // Calculate differnce between currentOarAngle and oldOarAngle
+        double difference = currentOarAngle - oldOarAngle;
+
+        if (difference < 0) {
           Serial.print("Air");
           Serial.print(": ");
           Serial.print(currentOarAngle);
           Serial.print(", ");
-          Serial.print(currentOarAngle);
           //force = FdAir; // air
-          force = 0;
-        } else {
+          Serial.print(force);
+        } else if (difference > 0) {
           Serial.print("Water");
           Serial.print(": ");
           Serial.print(currentOarAngle);
+          Serial.print(", ");
           //force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * cos(currentOarAngle) * scale; // water
           //force = 5 * (-3.8*pow(currentOarAngle, 2) - 3.7529*currentOarAngle + 0.0241);
+          Serial.print(force);
+        } else {
+          Serial.print("Stop");
+          Serial.print(": ");
+          Serial.print(currentOarAngle);
+          Serial.print(", ");
           force = 0;
+          Serial.print(force);
+        }
 
-  // Serial.print(currentOarAngle);
-  // Serial.print(",");
-  // Serial.print(xh);
->>>>>>> d6408afaa8feea4bfddc6b607353fefa763b165c
   Serial.println();
 
   // Step 3.2:
