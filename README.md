@@ -1,4 +1,4 @@
-# HapKit
+# Hapkit Rowing Simulation
 
 Arduino code for rowing simulation using the [Hapkit](http://hapkit.stanford.edu/) haptic simulation device. This code is based on the sample code provided [here](http://hapkit.stanford.edu/files/HapkitLab4SolutionsForWebsite.ino).
 

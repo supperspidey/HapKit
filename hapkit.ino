@@ -1,7 +1,11 @@
 //--------------------------------------------------------------------------
+// Original Authors:
 // Tania Morimoto and Allison Okamura, Stanford University
 // 11.16.13
 // Code to test basic Hapkit functionality (sensing and force output)
+//--------------------------------------------------------------------------
+// Modified for Hapkit Rowing Simulation by Van Le Nguyen, Ilhaan Rasheed and Bryce Walburn
+// ECES-490/690, Drexel University, Spring 2015
 //--------------------------------------------------------------------------
 
 // Includes
@@ -167,6 +171,7 @@ void loop()
          force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.008; // water
         }
 
+  // Print force, updatedPos & angleRadians values to serial port in CSV format
   Serial.print(force);
   Serial.print(",");
   Serial.print(updatedPos);
