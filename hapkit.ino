@@ -41,8 +41,8 @@ double duty = 0;            // duty cylce (between 0 and 255)
 unsigned int output = 0;    // output command to the motor
 
 // Angle and time variables
-double oldAngle = 0;
-double currentAngle = 0;
+double oldOarAngle = 0;
+double currentOarAngle = 0;
 unsigned long oldTimeSinceBegin = 0;
 unsigned long currentTimeSinceBegin = 0;
 
@@ -156,9 +156,9 @@ void loop()
         double vb = 5;                                    // Velocity of the boat [m/s]
         double L = 1.8;                                 // Travel length of the rowing seat [m]
         double angleRadians = ts*3.14159/180;                      // Angle converted into radians
-        currentAngle = angleRadians;
+        currentOarAngle = angleRadians;
         double Clmax = 1.2;  // Maximum lift coefficient
-        double dphidt = (currentAngle - oldAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
+        double dphidt = (currentOarAngle - oldOarAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
 
         double up = vb*sin(angleRadians);
         double ul = dphidt*L - vb*cos(angleRadians);
@@ -173,26 +173,34 @@ void loop()
 
         // Air - coefficient and force
         double rhoAir = 1.225;  // Density of air  [kg/m^3]
-        double CdAir = 0.04;   // Drag coefficient of streamlined body
+        double CdAir = 0.04;    // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        double scale = 0.0005;
+        double scale = 0.01;
 
-        if (vh > 0.5) {
-         force = FdAir * scale; // air
+        if (currentOarAngle < 0) {
+          Serial.print("Air");
+          Serial.print(": ");
+          Serial.print(currentOarAngle);
+          Serial.print(", ");
+          Serial.print(currentOarAngle);
+          //force = FdAir; // air
+          force = 0;
         } else {
-         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * scale; // water
+          Serial.print("Water");
+          Serial.print(": ");
+          Serial.print(currentOarAngle);
+          //force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * cos(currentOarAngle) * scale; // water
+          //force = 5 * (-3.8*pow(currentOarAngle, 2) - 3.7529*currentOarAngle + 0.0241);
+          force = 0;
         }
   
   
-  Serial.print(force);
-  Serial.print(",");
-  Serial.print(alpha);
-  Serial.print(",");
-  Serial.print(angleRadians);
+  // Serial.print(currentOarAngle);
+  // Serial.print(",");
+  // Serial.print(xh);
   Serial.println();
   
-
   // Step 3.2:
   Tp = rp / rs * rh * force;  // Compute the require motor pulley torque (Tp) to generate that force
 
@@ -242,7 +250,7 @@ void loop()
   output = (int)(duty * 255);  // convert duty cycle to output signal
   analogWrite(pwmPin, output); // output the signal
 
-  oldAngle = currentAngle;
+  oldOarAngle = currentOarAngle;
   oldTimeSinceBegin = currentTimeSinceBegin;
 }
 
