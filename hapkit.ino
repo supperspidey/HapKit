@@ -46,7 +46,6 @@ unsigned int output = 0;    // output command to the motor
 
 // Angle and time variables
 double oldOarAngle = 0;
-double currentOarAngle = 0;
 unsigned long oldTimeSinceBegin = 0;
 unsigned long currentTimeSinceBegin = 0;
 
@@ -159,10 +158,12 @@ void loop()
         double rho = 1000;                               // Density of water  [kg/m^3]
         double vb = 5;                                    // Velocity of the boat [m/s]
         double L = 1.8;                                 // Travel length of the rowing seat [m]
-        double angleRadians = ts*3.14159/180;                      // Angle converted into radians
-        currentOarAngle = angleRadians;
+        double angleRadians = ts*3.14159/180;               // Angle converted into radians
+
+        angleRadians = angleRadians * (0.85/0.45) - 0.25;
+
         double Clmax = 1.2;  // Maximum lift coefficient
-        double dphidt = (currentOarAngle - oldOarAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
+        double dphidt = (angleRadians - oldOarAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
 
         double up = vb*sin(angleRadians);
         double ul = dphidt*L - vb*cos(angleRadians);
@@ -180,34 +181,34 @@ void loop()
         double CdAir = 0.04;    // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        double scale = 0.001;
+        double scaleWater = 0.0004;
 
-        // Calculate differnce between currentOarAngle and oldOarAngle
-        double difference = currentOarAngle - oldOarAngle;
+        double difference = angleRadians - oldOarAngle;
 
         if (difference < 0) {
           Serial.print("Air");
-          Serial.print(": ");
-          Serial.print(currentOarAngle);
-          Serial.print(", ");
-          //force = FdAir; // air
+          Serial.print(",");
+          Serial.print(angleRadians);
+          Serial.print(",");
+          force = FdAir; // air
           Serial.print(force);
         } else if (difference > 0) {
           Serial.print("Water");
-          Serial.print(": ");
-          Serial.print(currentOarAngle);
-          Serial.print(", ");
-          //force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * cos(currentOarAngle) * scale; // water
-          //force = 5 * (-3.8*pow(currentOarAngle, 2) - 3.7529*currentOarAngle + 0.0241);
+          Serial.print(",");
+          Serial.print(angleRadians);
+          Serial.print(",");
+          force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * scaleWater; // water
+          //force = 0;
           Serial.print(force);
         } else {
           Serial.print("Stop");
-          Serial.print(": ");
-          Serial.print(currentOarAngle);
-          Serial.print(", ");
+          Serial.print(",");
+          Serial.print(angleRadians);
+          Serial.print(",");
           force = 0;
           Serial.print(force);
         }
+
 
   Serial.println();
 
@@ -260,7 +261,7 @@ void loop()
   output = (int)(duty * 255);  // convert duty cycle to output signal
   analogWrite(pwmPin, output); // output the signal
 
-  oldOarAngle = currentOarAngle;
+  oldOarAngle = angleRadians;
   oldTimeSinceBegin = currentTimeSinceBegin;
 }
 
