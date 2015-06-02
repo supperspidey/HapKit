@@ -209,7 +209,6 @@ void loop()
           Serial.print(force);
         }
 
-
   Serial.println();
 
   // Step 3.2:
