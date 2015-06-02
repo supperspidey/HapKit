@@ -44,6 +44,12 @@ double Tp = 0;              // torque of the motor pulley
 double duty = 0;            // duty cylce (between 0 and 255)
 unsigned int output = 0;    // output command to the motor
 
+// Angle and time variables
+double oldOarAngle = 0;
+double currentOarAngle = 0;
+unsigned long oldTimeSinceBegin = 0;
+unsigned long currentTimeSinceBegin = 0;
+
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -78,6 +84,7 @@ void setup()
 // --------------------------------------------------------------
 void loop()
 {
+  currentTimeSinceBegin = millis();
 
   //*************************************************************
   //*** Section 1. Compute position in counts (do not change) ***
@@ -127,6 +134,7 @@ void loop()
   //Serial.println(updatedPos);
   // Step 2.6:
   double ts = -.0107 * updatedPos + 4.9513; // Compute the angle of the sector pulley (ts) in degrees based on updatedPos
+
   // Step 2.7:
   xh = rh * (ts * 3.14159 / 180); // Compute the position of the handle based on ts
   // Step 2.8: print xh via serial monitor
@@ -149,34 +157,51 @@ void loop()
   // Rowing code
         double A = 0.146;                                // Area of the blade [m^2]
         double rho = 1000;                               // Density of water  [kg/m^3]
-        double v = 1;                                   // Velocity of undisturbed flow [m/s]
+        double vb = 5;                                    // Velocity of the boat [m/s]
+        double L = 1.8;                                 // Travel length of the rowing seat [m]
         double angleRadians = ts*3.14159/180;                      // Angle converted into radians
+        currentOarAngle = angleRadians;
         double Clmax = 1.2;  // Maximum lift coefficient
-        double Cd = 2*Clmax*pow(sin(angleRadians), 2);          // Drag coefficient
-        double Cl = Clmax*sin(2*angleRadians);
+        double dphidt = (currentOarAngle - oldOarAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
 
+        double up = vb*sin(angleRadians);
+        double ul = dphidt*L - vb*cos(angleRadians);
+        double alpha = atan2(ul, up);
+
+        double Cd = 2*Clmax*pow(sin(alpha), 2);          // Drag coefficient
+        double Cl = Clmax*sin(2*alpha);
+
+        double v = sqrt(pow(up, 2) + pow(ul, 2));
         double Fd = 0.5*Cd*rho*A*pow(v, 2);
         double Fl = 0.5*Cl*rho*A*pow(v, 2);
 
         // Air - coefficient and force
         double rhoAir = 1.225;  // Density of air  [kg/m^3]
-        double CdAir = 0.04;   // Drag coefficient of streamlined body
+        double CdAir = 0.04;    // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        //double force = 0;  // declared twice
+        double scale = 0.01;
 
-        if (vh > 0.5) {
-         force = FdAir * 0.008; // air
+        if (currentOarAngle < 0) {
+          Serial.print("Air");
+          Serial.print(": ");
+          Serial.print(currentOarAngle);
+          Serial.print(", ");
+          Serial.print(currentOarAngle);
+          //force = FdAir; // air
+          force = 0;
         } else {
-         force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * 0.008; // water
-        }
+          Serial.print("Water");
+          Serial.print(": ");
+          Serial.print(currentOarAngle);
+          //force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * cos(currentOarAngle) * scale; // water
+          //force = 5 * (-3.8*pow(currentOarAngle, 2) - 3.7529*currentOarAngle + 0.0241);
+          force = 0;
 
-  // Print force, updatedPos & angleRadians values to serial port in CSV format
-  Serial.print(force);
-  Serial.print(",");
-  Serial.print(updatedPos);
-  Serial.print(",");
-  Serial.print(angleRadians);
+  // Serial.print(currentOarAngle);
+  // Serial.print(",");
+  // Serial.print(xh);
+>>>>>>> d6408afaa8feea4bfddc6b607353fefa763b165c
   Serial.println();
 
   // Step 3.2:
@@ -227,6 +252,9 @@ void loop()
   }
   output = (int)(duty * 255);  // convert duty cycle to output signal
   analogWrite(pwmPin, output); // output the signal
+
+  oldOarAngle = currentOarAngle;
+  oldTimeSinceBegin = currentTimeSinceBegin;
 }
 
 // --------------------------------------------------------------
