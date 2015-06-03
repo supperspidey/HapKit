@@ -5,7 +5,8 @@
 // Code to test basic Hapkit functionality (sensing and force output)
 //--------------------------------------------------------------------------
 // Modified for Hapkit Rowing Simulation by Van Le Nguyen, Ilhaan Rasheed and Bryce Walburn
-// ECES-490/690, Drexel University, Spring 2015
+// ECES-490/690: Haptics, Drexel University, Spring 2015
+// Project Blog: drexelhapkit.wordpress.com
 //--------------------------------------------------------------------------
 
 // Includes
@@ -154,13 +155,13 @@ void loop()
   double rs = 0.073152;   //[m]
 
   // Rowing code
-        double A = 0.146;                                // Area of the blade [m^2]
-        double rho = 1000;                               // Density of water  [kg/m^3]
+        double A = 0.146;                                 // Area of the blade [m^2]
+        double rho = 1000;                                // Density of water  [kg/m^3]
         double vb = 5;                                    // Velocity of the boat [m/s]
-        double L = 1.8;                                 // Travel length of the rowing seat [m]
-        double angleRadians = ts*3.14159/180;               // Angle converted into radians
+        double L = 1.8;                                   // Travel length of the rowing seat [m]
+        double angleRadians = ts*3.14159/180;             // Angle converted into radians
 
-        angleRadians = angleRadians * (0.85/0.45) - 0.25;
+        angleRadians = angleRadians * (0.85/0.45) - 0.25; // Angle scaled to match range of motion of actual paddle. Refer to http://home.hccnet.nl/m.holst/result1.pdf
 
         double Clmax = 1.2;  // Maximum lift coefficient
         double dphidt = (angleRadians - oldOarAngle) /  ((currentTimeSinceBegin - oldTimeSinceBegin)/1000.0); // Derivative of the oar angle
@@ -181,38 +182,39 @@ void loop()
         double CdAir = 0.04;    // Drag coefficient of streamlined body
         double FdAir = 0.5*CdAir*rhoAir*A*pow(vh, 2);
 
-        double scaleWater = 0.0004;
+        // Scale amount for forces
+        double scale = 0.0004;
 
+        // Difference between current angle reading and previous angle reading to detect paddle direction
         double difference = angleRadians - oldOarAngle;
 
         if (difference < 0) {
           Serial.print("Air");
-          Serial.print(",");
+          Serial.print(": ");
           Serial.print(angleRadians);
-          Serial.print(",");
-          force = FdAir; // air
+          Serial.print(", ");
+          force = FdAir * scale;        // air
           Serial.print(force);
         } else if (difference > 0) {
           Serial.print("Water");
-          Serial.print(",");
+          Serial.print(": ");
           Serial.print(angleRadians);
-          Serial.print(",");
-          force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * scaleWater; // water
-          //force = 0;
+          Serial.print(", ");
+          force = sqrt(pow(Fd, 2) + pow(Fl, 2)) * scale; // water
           Serial.print(force);
         } else {
           Serial.print("Stop");
-          Serial.print(",");
+          Serial.print(": ");
           Serial.print(angleRadians);
-          Serial.print(",");
+          Serial.print(", ");
           force = 0;
           Serial.print(force);
         }
 
-  Serial.println();
+  Serial.println(); // New line for next loop
 
   // Step 3.2:
-  Tp = rp / rs * rh * force;  // Compute the require motor pulley torque (Tp) to generate that force
+  Tp = rp / rs * rh * force;  // Compute the required motor pulley torque (Tp) to generate force
 
 
   //This next section is OPTIONAL depending on if you have a FSR
